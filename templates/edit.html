@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+  <section class="relative gradient-card rounded-2xl bg-white shadow p-6 max-w-3xl">
+    <h2 class="text-lg font-semibold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-fuchsia-600 to-emerald-600">Edit contact</h2>
+    <form action="/edit/{{ c.id }}" method="post" class="grid md:grid-cols-2 gap-4">
+      <label class="grid gap-1">
+        <span class="text-xs text-slate-600">Name</span>
+        <input name="name" value="{{ c.name }}" required class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-sky-400" />
+      </label>
+      <label class="grid gap-1">
+        <span class="text-xs text-slate-600">University</span>
+        <input name="university" value="{{ c.university }}" required class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
+      </label>
+      <label class="grid gap-1 md:col-span-2">
+        <span class="text-xs text-slate-600">Research Focus</span>
+        <input name="research_focus" value="{{ c.research_focus }}" required class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      </label>
+      <label class="grid gap-1">
+        <span class="text-xs text-slate-600">Contact Email</span>
+        <input type="email" name="contact_email" value="{{ c.contact_email }}" required class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-sky-400" />
+      </label>
+      <label class="grid gap-1">
+        <span class="text-xs text-slate-600">Source URL</span>
+        <input name="source_url" value="{{ c.source_url }}" class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
+      </label>
+
+      <div class="flex items-center gap-6 md:col-span-2 mt-2">
+        <label class="inline-flex items-center gap-2">
+          <input type="checkbox" name="email_sent" {% if c.email_sent %}checked{% endif %} class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" />
+          <span class="text-sm">Email sent</span>
+        </label>
+        <label class="inline-flex items-center gap-2">
+          <input type="checkbox" name="reminder_sent" {% if c.reminder_sent %}checked{% endif %} class="h-4 w-4 rounded border-slate-300 text-fuchsia-600 focus:ring-fuchsia-500" />
+          <span class="text-sm">Reminder sent</span>
+        </label>
+      </div>
+
+      <div class="md:col-span-2 flex items-center gap-3 mt-2">
+        <button type="submit" class="px-4 py-2 rounded-xl bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600 text-white shadow hover:opacity-95">Save changes</button>
+        <a href="/" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}

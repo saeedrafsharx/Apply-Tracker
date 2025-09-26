@@ -1,0 +1,2 @@
+.rgb-text { background-image: linear-gradient(90deg,#06b6d4,#8b5cf6,#10b981); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.glow { box-shadow: 0 0 0 1px rgba(14,165,233,.15), 0 10px 25px rgba(99,102,241,.15); }

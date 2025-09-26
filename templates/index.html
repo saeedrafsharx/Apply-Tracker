@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="grid gap-8">
+    <!-- Add form -->
+    <section class="relative gradient-card rounded-2xl bg-white shadow p-5">
+      <h2 class="text-lg font-semibold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600">Add a contact</h2>
+      <form action="/add" method="post" class="grid md:grid-cols-5 gap-3">
+        <input name="name" required placeholder="Name" class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-sky-400" />
+        <input name="university" required placeholder="University" class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
+        <input name="research_focus" required placeholder="Research Focus" class="px-3 py-2 rounded-lg border md:col-span-2 focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        <input name="contact_email" required type="email" placeholder="Contact Email" class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-sky-400" />
+        <input name="source_url" placeholder="Source URL" class="px-3 py-2 rounded-lg border md:col-span-4 focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
+        <div class="md:col-span-5">
+          <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600 text-white shadow hover:opacity-95 active:opacity-90">Save</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- List -->
+    <section class="relative gradient-card rounded-2xl bg-white shadow overflow-hidden">
+      <div class="px-5 py-4 border-b flex items-center justify-between">
+        <h2 class="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-sky-600 to-fuchsia-600">Contacts</h2>
+        <p class="text-xs text-slate-500">Toggle statuses, edit or delete entries.</p>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead>
+            <tr class="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 text-slate-700 text-left">
+              <th class="px-4 py-3">Name</th>
+              <th class="px-4 py-3">University</th>
+              <th class="px-4 py-3">Research Focus</th>
+              <th class="px-4 py-3">Email</th>
+              <th class="px-4 py-3">Source</th>
+              <th class="px-4 py-3">Email Sent</th>
+              <th class="px-4 py-3">Sent At</th>
+              <th class="px-4 py-3">Reminder</th>
+              <th class="px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y">
+            {% for c in contacts %}
+            <tr class="hover:bg-slate-50/70">
+              <td class="px-4 py-3 font-medium flex items-center gap-2">
+                <span class="inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r from-sky-500 via-fuchsia-500 to-emerald-500"></span>
+                {{ c.name }}
+              </td>
+              <td class="px-4 py-3">{{ c.university }}</td>
+              <td class="px-4 py-3 text-slate-700">{{ c.research_focus }}</td>
+              <td class="px-4 py-3">
+                <a class="text-sky-700 hover:underline" href="mailto:{{ c.contact_email }}">{{ c.contact_email }}</a>
+              </td>
+              <td class="px-4 py-3">
+                {% if c.source_url and c.source_url != '#' %}
+                <a class="text-fuchsia-700 hover:underline" href="{{ c.source_url }}" target="_blank" rel="noopener">Source</a>
+                {% else %}
+                <span class="text-slate-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                <form action="/toggle-email/{{ c.id }}" method="post">
+                  <button type="submit" class="px-3 py-1 rounded-full text-xs font-semibold shadow {{ 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white' if c.email_sent else 'bg-gradient-to-r from-slate-200 to-slate-300 text-slate-700' }}">
+                    {{ 'Sent' if c.email_sent else 'Not sent' }}
+                  </button>
+                </form>
+              </td>
+              <td class="px-4 py-3 text-slate-600">
+                {% if c.email_sent_at %}
+                  {{ c.email_sent_at.astimezone().strftime('%Y-%m-%d %H:%M') }}
+                {% else %}
+                  <span class="text-slate-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                <form action="/toggle-reminder/{{ c.id }}" method="post">
+                  <button type="submit" class="px-3 py-1 rounded-full text-xs font-semibold shadow {{ 'bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white' if c.reminder_sent else 'bg-gradient-to-r from-slate-200 to-slate-300 text-slate-700' }}">
+                    {{ 'Sent' if c.reminder_sent else 'Not sent' }}
+                  </button>
+                </form>
+              </td>
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <a href="/edit/{{ c.id }}" class="px-3 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow hover:opacity-95">Edit</a>
+                  <form action="/delete/{{ c.id }}" method="post" onsubmit="return confirm('Delete {{ c.name }}? This cannot be undone.')">
+                    <button type="submit" class="px-3 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-rose-600 to-orange-600 text-white shadow hover:opacity-95">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+{% endblock %}

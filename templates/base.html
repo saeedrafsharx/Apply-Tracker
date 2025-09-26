@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Contact Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .gradient-card { position: relative; }
+      .gradient-card::before {
+        content: ""; position: absolute; inset: 0; padding: 1px; border-radius: 1rem;
+        background: linear-gradient(135deg, #06b6d4, #8b5cf6, #10b981);
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor; mask-composite: exclude;
+        /* important fix: let clicks pass through the decorative border */
+        pointer-events: none;
+      }
+      /* ensure real content is above the decorative layer */
+      .gradient-card > * { position: relative; z-index: 1; }
+    </style>
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900">
+    <header class="sticky top-0 z-10 bg-white/70 backdrop-blur border-b">
+      <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <h1 class="text-xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-600 via-sky-600 to-emerald-600">Contact Tracker</h1>
+        <a href="/" class="text-sm text-slate-600 hover:text-slate-900">Home</a>
+      </div>
+    </header>
+    <main class="max-w-7xl mx-auto px-4 py-8">
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="max-w-7xl mx-auto px-4 py-10 text-xs text-slate-500">
+      Built with FastAPI + Jinja + Tailwind · RGB theme
+    </footer>
+  </body>
+</html>
