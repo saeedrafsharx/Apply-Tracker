@@ -1,8 +1,6 @@
-from __future__ import annotations
-import os
 from pathlib import Path
 from sqlmodel import SQLModel, create_engine
-
+import os
 DB_OVERRIDE = os.getenv("CONTACT_DB")
 if DB_OVERRIDE:
     DB_PATH = DB_OVERRIDE
