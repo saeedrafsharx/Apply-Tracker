@@ -1,7 +1,7 @@
 from __future__ import annotations
 import os
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import Optional
 
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import RedirectResponse
@@ -23,7 +23,7 @@ templates = Jinja2Templates(directory="templates")
 
 # ─────────────────────────────── Helpers ───────────────────────────────
 
-def get_user_from_session(request: Request) -> Optional[User]:
+def get_user_from_session(request: Request) -> User | None:
     uid = request.session.get("uid")
     if not uid:
         return None
@@ -36,7 +36,7 @@ async def attach_user(request: Request, call_next):
     return await call_next(request)
 
 # ─────────────────────────────── Seed data ─────────────────────────────
-SEED_CONTACTS: List[dict] = [
+SEED_CONTACTS: list[dict] = [
     {"name": "Danilo Bzdok", "university": "McGill (IPN)", "research_focus": "computational neuroimaging, ML", "contact_email": "danilo.bzdok@mcgill.ca", "source_url": "https://www.mcgill.ca/ipn/prospective/supervisors-recruiting"},
     {"name": "Boris Bernhardt", "university": "McGill (IPN)", "research_focus": "network analysis, neuroimaging", "contact_email": "boris.bernhardt@mcgill.ca", "source_url": "https://www.mcgill.ca/ipn/prospective/supervisors-recruiting"},
     {"name": "Mahsa Dadar", "university": "McGill (IPN)", "research_focus": "brain imaging, aging, ML", "contact_email": "mahsa.dadar@mcgill.ca", "source_url": "https://www.mcgill.ca/ipn/prospective/supervisors-recruiting"},

@@ -1,19 +1,20 @@
 from __future__ import annotations
-from typing import Optional, List
 from datetime import datetime, timezone
+from typing import Optional
 from sqlmodel import SQLModel, Field, Relationship
 
 class User(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     username: str = Field(index=True)
-    email: Optional[str] = None
+    email: str | None = None
     password_hash: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
-    contacts: List["Contact"] = Relationship(back_populates="owner")
+    # Use built-in generics for SQLAlchemy 2.x compatibility
+    contacts: list["Contact"] = Relationship(back_populates="owner")
 
 class Contact(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     name: str
     university: str
     research_focus: str
@@ -21,8 +22,8 @@ class Contact(SQLModel, table=True):
     source_url: str
 
     email_sent: bool = Field(default=False)
-    email_sent_at: Optional[datetime] = None
+    email_sent_at: datetime | None = None
     reminder_sent: bool = Field(default=False)
 
-    owner_id: Optional[int] = Field(default=None, foreign_key="user.id")
-    owner: Optional[User] = Relationship(back_populates="contacts")
+    owner_id: int | None = Field(default=None, foreign_key="user.id")
+    owner: "User | None" = Relationship(back_populates="contacts")
