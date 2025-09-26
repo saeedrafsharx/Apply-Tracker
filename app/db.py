@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from sqlmodel import SQLModel, create_engine
 
-# Allow tests or users to override DB location via CONTACT_DB
 DB_OVERRIDE = os.getenv("CONTACT_DB")
 if DB_OVERRIDE:
     DB_PATH = DB_OVERRIDE

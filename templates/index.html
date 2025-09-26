@@ -1,6 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
+  {% if not request.state.user %}
+    <div class="p-6 bg-white rounded-2xl shadow">Please <a class="text-sky-600 underline" href="/login">log in</a>.</div>
+  {% else %}
   <div class="grid gap-8">
+    <!-- Stats cards -->
+    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="gradient-card rounded-2xl bg-white shadow p-5">
+        <div class="text-slate-500 text-xs">Total</div>
+        <div class="text-2xl font-semibold">{{ stats.total }}</div>
+      </div>
+      <div class="gradient-card rounded-2xl bg-white shadow p-5">
+        <div class="text-slate-500 text-xs">Email sent</div>
+        <div class="text-2xl font-semibold">{{ stats.sent }}</div>
+      </div>
+      <div class="gradient-card rounded-2xl bg-white shadow p-5">
+        <div class="text-slate-500 text-xs">Reminders</div>
+        <div class="text-2xl font-semibold">{{ stats.reminders }}</div>
+      </div>
+    </section>
+
     <!-- Add form -->
     <section class="relative gradient-card rounded-2xl bg-white shadow p-5">
       <h2 class="text-lg font-semibold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600">Add a contact</h2>
@@ -19,7 +38,7 @@
     <!-- List -->
     <section class="relative gradient-card rounded-2xl bg-white shadow overflow-hidden">
       <div class="px-5 py-4 border-b flex items-center justify-between">
-        <h2 class="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-sky-600 to-fuchsia-600">Contacts</h2>
+        <h2 class="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-sky-600 to-fuchsia-600">My Contacts</h2>
         <p class="text-xs text-slate-500">Toggle statuses, edit or delete entries.</p>
       </div>
 
@@ -93,4 +112,5 @@
       </div>
     </section>
   </div>
+  {% endif %}
 {% endblock %}
