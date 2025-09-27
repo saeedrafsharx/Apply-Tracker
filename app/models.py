@@ -1,3 +1,15 @@
+# --- Temporary Py3.12 fix for SQLModel issubclass bug ---
+import sqlmodel.main, typing
+_orig = sqlmodel.main.get_sqlalchemy_type
+def _patched_get_sqlalchemy_type(field):
+    t = getattr(field, "type_", None)
+    # Skip if it's not an actual class (e.g., UnionType, ForwardRef)
+    if not isinstance(t, type):
+        return None
+    return _orig(field)
+sqlmodel.main.get_sqlalchemy_type = _patched_get_sqlalchemy_type
+# --------------------------------------------------------
+
 # app/models.py
 from __future__ import annotations
 from datetime import datetime, timezone
