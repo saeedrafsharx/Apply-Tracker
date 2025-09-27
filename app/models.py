@@ -1,7 +1,7 @@
 # app/models.py
 from __future__ import annotations
 from datetime import datetime, timezone
-from typing import Optional
+from typing import List
 
 from sqlmodel import SQLModel, Field
 from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
@@ -9,15 +9,15 @@ from sqlalchemy.orm import Mapped, relationship
 
 
 class User(SQLModel, table=True):
-    # Use explicit SQLAlchemy Column for every DB field to avoid type inference bugs on py3.12
-    id: Optional[int] = Field(
+    # Explicit SQLAlchemy Column for every DB field to avoid Py3.12 inference bugs
+    id: int | None = Field(
         default=None,
         sa_column=Column(Integer, primary_key=True)
     )
     username: str = Field(
         sa_column=Column(String, nullable=False, index=True)
     )
-    email: Optional[str] = Field(
+    email: str | None = Field(
         default=None,
         sa_column=Column(String, nullable=True)
     )
@@ -29,12 +29,12 @@ class User(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True), nullable=False)
     )
 
-    # Typed ORM relationships (no positional target; type comes from Mapped[...])
-    contacts: Mapped[list["Contact"]] = relationship(back_populates="owner")
+    # Typed ORM relationship (not a column)
+    contacts: Mapped[List["Contact"]] = relationship(back_populates="owner")
 
 
 class Contact(SQLModel, table=True):
-    id: Optional[int] = Field(
+    id: int | None = Field(
         default=None,
         sa_column=Column(Integer, primary_key=True)
     )
@@ -58,7 +58,7 @@ class Contact(SQLModel, table=True):
         default=False,
         sa_column=Column(Boolean, nullable=False, default=False)
     )
-    email_sent_at: Optional[datetime] = Field(
+    email_sent_at: datetime | None = Field(
         default=None,
         sa_column=Column(DateTime(timezone=True), nullable=True)
     )
@@ -67,8 +67,8 @@ class Contact(SQLModel, table=True):
         sa_column=Column(Boolean, nullable=False, default=False)
     )
 
-    owner_id: Optional[int] = Field(
+    owner_id: int | None = Field(
         default=None,
         sa_column=Column(Integer, ForeignKey("user.id"), nullable=True)
     )
-    owner: Mapped[Optional["User"]] = relationship(back_populates="contacts")
+    owner: Mapped["User" | None] = relationship(back_populates="contacts")
