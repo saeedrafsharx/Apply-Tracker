@@ -21,9 +21,12 @@
     <header class="sticky top-0 z-10 bg-white/70 backdrop-blur border-b">
       <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         <a href="/" class="text-xl font-semibold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-fuchsia-600 via-sky-600 to-emerald-600">Contact Tracker</a>
+
+        {# Use `user` if provided; otherwise fall back to request.state.user #}
+        {% set u = user if user is defined else request.state.user %}
         <nav class="flex items-center gap-3 text-sm">
-          {% if request.state.user %}
-            <span class="text-slate-600">Hi, {{ request.state.user.username }}</span>
+          {% if u %}
+            <span class="text-slate-600">Hi, {{ u.username }}</span>
             <form action="/logout" method="post">
               <button class="px-3 py-1 rounded-lg bg-gradient-to-r from-rose-500 to-orange-500 text-white">Logout</button>
             </form>
@@ -34,9 +37,11 @@
         </nav>
       </div>
     </header>
+
     <main class="max-w-7xl mx-auto px-4 py-8">
       {% block content %}{% endblock %}
     </main>
+
     <footer class="max-w-7xl mx-auto px-4 py-10 text-xs text-slate-500">
       Built with FastAPI + Jinja + Tailwind · RGB theme ✨
     </footer>

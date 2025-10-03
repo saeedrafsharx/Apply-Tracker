@@ -1,13 +1,37 @@
-from pathlib import Path
-from sqlmodel import SQLModel, create_engine
+from __future__ import annotations
 import os
+from pathlib import Path
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 DB_OVERRIDE = os.getenv("CONTACT_DB")
 if DB_OVERRIDE:
     DB_PATH = DB_OVERRIDE
 else:
     DB_PATH = str(Path(__file__).resolve().parent.parent / "contact_tracker.db")
 
-engine = create_engine(f"sqlite:///{DB_PATH}", echo=False)
+DATABASE_URL = f"sqlite:///{DB_PATH}"
 
-def init_db() -> None:
-    SQLModel.metadata.create_all(engine)
+engine = create_engine(
+    DATABASE_URL,
+    future=True,
+    echo=False,
+    pool_pre_ping=True,
+)
+
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, expire_on_commit=False, future=True)
+
+# FastAPI dependency
+from contextlib import contextmanager
+
+@contextmanager
+def session_scope():
+    session = SessionLocal()
+    try:
+        yield session
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()

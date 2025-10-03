@@ -8,55 +8,71 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-from sqlmodel import Session, select
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-from .db import engine, init_db
-from .models import Contact, User
+from .db import engine, session_scope
+from .models import Base, User, Contact
+from .schemas import UserCreate, Login, ContactCreate
 from .auth import get_password_hash, verify_password
+from starlette.middleware.base import BaseHTTPMiddleware
+from .db import session_scope
+from .models import User
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me")
 
 app = FastAPI(title="Contact Tracker")
+
+# 1) Session middleware MUST be first
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, session_cookie="ct_session")
+
+# 2) Our user loader runs inside SessionMiddleware
+class UserLoaderMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        user = None
+        # Only touch the session if SessionMiddleware already put it in scope
+        if "session" in request.scope:
+            uid = request.session.get("uid")
+            if uid:
+                with session_scope() as db:
+                    user = db.get(User, int(uid))
+        request.state.user = user
+        return await call_next(request)
+
+app.add_middleware(UserLoaderMiddleware)
+
+# (rest of your setup)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# ─────────────────────────────── Helpers ───────────────────────────────
-
-def get_user_from_session(request: Request) -> User | None:
+def current_user(request: Request, db: Session) -> Optional[User]:
     uid = request.session.get("uid")
     if not uid:
         return None
-    with Session(engine) as session:
-        return session.get(User, uid)
+    return db.get(User, int(uid))
 
-@app.middleware("http")
-async def attach_user(request: Request, call_next):
-    request.state.user = get_user_from_session(request)
-    return await call_next(request)
 
-# ─────────────────────────────── Seed data ─────────────────────────────
-SEED_CONTACTS: list[dict] = [
-    {"name": "Danilo Bzdok", "university": "McGill (IPN)", "research_focus": "computational neuroimaging, ML", "contact_email": "danilo.bzdok@mcgill.ca", "source_url": "https://www.mcgill.ca/ipn/prospective/supervisors-recruiting"},
-    {"name": "Boris Bernhardt", "university": "McGill (IPN)", "research_focus": "network analysis, neuroimaging", "contact_email": "boris.bernhardt@mcgill.ca", "source_url": "https://www.mcgill.ca/ipn/prospective/supervisors-recruiting"},
-    {"name": "Mahsa Dadar", "university": "McGill (IPN)", "research_focus": "brain imaging, aging, ML", "contact_email": "mahsa.dadar@mcgill.ca", "source_url": "https://www.mcgill.ca/ipn/prospective/supervisors-recruiting"},
-]
-
+# ─────────────── startup / seed ───────────────
 @app.on_event("startup")
 def on_startup() -> None:
-    init_db()
-    with Session(engine) as session:
-        any_user = session.exec(select(User).limit(1)).first()
+    Base.metadata.create_all(bind=engine)
+    from sqlalchemy import func
+    with session_scope() as db:
+        any_user = db.execute(select(User).limit(1)).scalar_one_or_none()
         if not any_user:
             demo = User(username="demo", email="demo@example.com", password_hash=get_password_hash("demo1234"))
-            session.add(demo)
-            session.commit()
-            session.refresh(demo)
-            for row in SEED_CONTACTS:
-                session.add(Contact(**row, owner_id=demo.id))
-            session.commit()
+            db.add(demo)
+            db.flush()
+            seed = [
+                dict(name="Danilo Bzdok", university="McGill (IPN)", research_focus="computational neuroimaging, ML", contact_email="danilo.bzdok@mcgill.ca", source_url="https://www.mcgill.ca/ipn/prospective/supervisors-recruiting"),
+                dict(name="Boris Bernhardt", university="McGill (IPN)", research_focus="network analysis, neuroimaging", contact_email="boris.bernhardt@mcgill.ca", source_url="https://www.mcgill.ca/ipn/prospective/supervisors-recruiting"),
+                dict(name="Mahsa Dadar", university="McGill (IPN)", research_focus="brain imaging, aging, ML", contact_email="mahsa.dadar@mcgill.ca", source_url="https://www.mcgill.ca/ipn/prospective/supervisors-recruiting"),
+            ]
+            for it in seed:
+                db.add(Contact(owner_id=demo.id, **it))
 
-# ─────────────────────────────── Routes ────────────────────────────────
+
+# ─────────────── routes ───────────────
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -71,31 +87,32 @@ def login_form(request: Request):
         return RedirectResponse("/dashboard", status_code=303)
     return templates.TemplateResponse("login.html", {"request": request})
 
-@app.post("/login")
-def login(request: Request, username: str = Form(...), password: str = Form(...)):
-    with Session(engine) as session:
-        user = session.exec(select(User).where(User.username == username)).first()
-        if not user or not verify_password(password, user.password_hash):
-            return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid credentials"}, status_code=401)
-        request.session["uid"] = user.id
-    return RedirectResponse("/dashboard", status_code=303)
-
 @app.get("/register")
 def register_form(request: Request):
     if request.state.user:
         return RedirectResponse("/dashboard", status_code=303)
     return templates.TemplateResponse("register.html", {"request": request})
 
+@app.post("/login")
+def login(request: Request, username: str = Form(...), password: str = Form(...)):
+    payload = Login(username=username, password=password)
+    with session_scope() as db:
+        user = db.execute(select(User).where(User.username == payload.username)).scalar_one_or_none()
+        if not user or not verify_password(payload.password, user.password_hash):
+            return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid credentials"}, status_code=401)
+        request.session["uid"] = user.id
+    return RedirectResponse("/dashboard", status_code=303)
+
 @app.post("/register")
 def register(request: Request, username: str = Form(...), email: str = Form(""), password: str = Form(...)):
-    with Session(engine) as session:
-        exists = session.exec(select(User).where(User.username == username)).first()
+    payload = UserCreate(username=username, email=(email or None), password=password)
+    with session_scope() as db:
+        exists = db.execute(select(User).where(User.username == payload.username)).scalar_one_or_none()
         if exists:
             return templates.TemplateResponse("register.html", {"request": request, "error": "Username already exists"}, status_code=400)
-        user = User(username=username.strip(), email=email.strip() or None, password_hash=get_password_hash(password))
-        session.add(user)
-        session.commit()
-        session.refresh(user)
+        user = User(username=payload.username, email=payload.email, password_hash=get_password_hash(payload.password))
+        db.add(user)
+        db.flush()
         request.session["uid"] = user.id
     return RedirectResponse("/dashboard", status_code=303)
 
@@ -104,21 +121,24 @@ def logout(request: Request):
     request.session.clear()
     return RedirectResponse("/login", status_code=303)
 
+# dashboard
 @app.get("/dashboard")
 def dashboard(request: Request):
-    if not request.state.user:
-        return RedirectResponse("/login", status_code=303)
-    user = request.state.user
-    with Session(engine) as session:
-        contacts = session.exec(
+    with session_scope() as db:
+        user = current_user(request, db)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+        contacts = db.execute(
             select(Contact).where(Contact.owner_id == user.id).order_by(Contact.university, Contact.name)
-        ).all()
-        total = len(contacts)
-        sent = sum(1 for c in contacts if c.email_sent)
-        reminders = sum(1 for c in contacts if c.reminder_sent)
-    return templates.TemplateResponse("index.html", {"request": request, "contacts": contacts, "user": user, "stats": {"total": total, "sent": sent, "reminders": reminders}})
+        ).scalars().all()
+        stats = {
+            "total": len(contacts),
+            "sent": sum(1 for c in contacts if c.email_sent),
+            "reminders": sum(1 for c in contacts if c.reminder_sent),
+        }
+        return templates.TemplateResponse("index.html", {"request": request, "contacts": contacts, "user": user, "stats": stats})
 
-# ───────────── CRUD (require login) ─────────────
+# CRUD
 @app.post("/add")
 def add_contact(request: Request,
     name: str = Form(...),
@@ -127,32 +147,27 @@ def add_contact(request: Request,
     contact_email: str = Form(...),
     source_url: str = Form("")
 ):
-    user = request.state.user
-    if not user:
-        return RedirectResponse("/login", status_code=303)
-    with Session(engine) as session:
-        c = Contact(
-            name=name.strip(),
-            university=university.strip(),
-            research_focus=research_focus.strip(),
-            contact_email=contact_email.strip(),
-            source_url=source_url.strip() or "#",
-            owner_id=user.id,
-        )
-        session.add(c)
-        session.commit()
-    return RedirectResponse(url="/dashboard", status_code=303)
+    payload = ContactCreate(
+        name=name, university=university, research_focus=research_focus,
+        contact_email=contact_email, source_url=source_url or "#",
+    )
+    with session_scope() as db:
+        user = current_user(request, db)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+        db.add(Contact(owner_id=user.id, **payload.model_dump()))
+    return RedirectResponse("/dashboard", status_code=303)
 
 @app.get("/edit/{contact_id}")
 def edit_form(request: Request, contact_id: int):
-    user = request.state.user
-    if not user:
-        return RedirectResponse("/login", status_code=303)
-    with Session(engine) as session:
-        c = session.get(Contact, contact_id)
+    with session_scope() as db:
+        user = current_user(request, db)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+        c = db.get(Contact, contact_id)
         if not c or c.owner_id != user.id:
             return RedirectResponse("/dashboard", status_code=303)
-    return templates.TemplateResponse("edit.html", {"request": request, "c": c, "user": user})
+        return templates.TemplateResponse("edit.html", {"request": request, "c": c, "user": user})
 
 @app.post("/edit/{contact_id}")
 def edit_contact(
@@ -166,18 +181,18 @@ def edit_contact(
     email_sent: Optional[str] = Form(None),
     reminder_sent: Optional[str] = Form(None),
 ):
-    user = request.state.user
-    if not user:
-        return RedirectResponse("/login", status_code=303)
-    with Session(engine) as session:
-        c = session.get(Contact, contact_id)
+    with session_scope() as db:
+        user = current_user(request, db)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+        c = db.get(Contact, contact_id)
         if not c or c.owner_id != user.id:
             return RedirectResponse("/dashboard", status_code=303)
         c.name = name.strip()
         c.university = university.strip()
         c.research_focus = research_focus.strip()
         c.contact_email = contact_email.strip()
-        c.source_url = source_url.strip() or "#"
+        c.source_url = (source_url.strip() or "#")
 
         new_email_sent = email_sent is not None
         if new_email_sent != c.email_sent:
@@ -186,46 +201,38 @@ def edit_contact(
 
         c.reminder_sent = reminder_sent is not None
 
-        session.add(c)
-        session.commit()
-    return RedirectResponse(url="/dashboard", status_code=303)
+    return RedirectResponse("/dashboard", status_code=303)
 
 @app.post("/delete/{contact_id}")
 def delete_contact(request: Request, contact_id: int):
-    user = request.state.user
-    if not user:
-        return RedirectResponse("/login", status_code=303)
-    with Session(engine) as session:
-        c = session.get(Contact, contact_id)
+    with session_scope() as db:
+        user = current_user(request, db)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+        c = db.get(Contact, contact_id)
         if c and c.owner_id == user.id:
-            session.delete(c)
-            session.commit()
-    return RedirectResponse(url="/dashboard", status_code=303)
+            db.delete(c)
+    return RedirectResponse("/dashboard", status_code=303)
 
 @app.post("/toggle-email/{contact_id}")
 def toggle_email(request: Request, contact_id: int):
-    user = request.state.user
-    if not user:
-        return RedirectResponse("/login", status_code=303)
-    with Session(engine) as session:
-        c = session.get(Contact, contact_id)
+    with session_scope() as db:
+        user = current_user(request, db)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+        c = db.get(Contact, contact_id)
         if c and c.owner_id == user.id:
-            new_state = not c.email_sent
-            c.email_sent = new_state
-            c.email_sent_at = datetime.now(timezone.utc) if new_state else None
-            session.add(c)
-            session.commit()
-    return RedirectResponse(url="/dashboard", status_code=303)
+            c.email_sent = not c.email_sent
+            c.email_sent_at = datetime.now(timezone.utc) if c.email_sent else None
+    return RedirectResponse("/dashboard", status_code=303)
 
 @app.post("/toggle-reminder/{contact_id}")
 def toggle_reminder(request: Request, contact_id: int):
-    user = request.state.user
-    if not user:
-        return RedirectResponse("/login", status_code=303)
-    with Session(engine) as session:
-        c = session.get(Contact, contact_id)
+    with session_scope() as db:
+        user = current_user(request, db)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+        c = db.get(Contact, contact_id)
         if c and c.owner_id == user.id:
             c.reminder_sent = not c.reminder_sent
-            session.add(c)
-            session.commit()
-    return RedirectResponse(url="/dashboard", status_code=303)
+    return RedirectResponse("/dashboard", status_code=303)

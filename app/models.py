@@ -1,86 +1,43 @@
-# --- Temporary Py3.12 fix for SQLModel issubclass bug ---
-import sqlmodel.main, typing
-_orig = sqlmodel.main.get_sqlalchemy_type
-def _patched_get_sqlalchemy_type(field):
-    t = getattr(field, "type_", None)
-    # Skip if it's not an actual class (e.g., UnionType, ForwardRef)
-    if not isinstance(t, type):
-        return None
-    return _orig(field)
-sqlmodel.main.get_sqlalchemy_type = _patched_get_sqlalchemy_type
-# --------------------------------------------------------
-
-# app/models.py
 from __future__ import annotations
 from datetime import datetime, timezone
-from typing import List
+from typing import Optional
 
-from sqlmodel import SQLModel, Field
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
-from sqlalchemy.orm import Mapped, relationship
-
-
-class User(SQLModel, table=True):
-    # Explicit SQLAlchemy Column for every DB field to avoid Py3.12 inference bugs
-    id: int | None = Field(
-        default=None,
-        sa_column=Column(Integer, primary_key=True)
-    )
-    username: str = Field(
-        sa_column=Column(String, nullable=False, index=True)
-    )
-    email: str | None = Field(
-        default=None,
-        sa_column=Column(String, nullable=True)
-    )
-    password_hash: str = Field(
-        sa_column=Column(String, nullable=False)
-    )
-    created_at: datetime = Field(
-        default_factory=lambda: datetime.now(timezone.utc),
-        sa_column=Column(DateTime(timezone=True), nullable=False)
-    )
-
-    # Typed ORM relationship (not a column)
-    contacts: Mapped[List["Contact"]] = relationship(back_populates="owner")
+from sqlalchemy import String, DateTime, Boolean, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
-class Contact(SQLModel, table=True):
-    id: int | None = Field(
-        default=None,
-        sa_column=Column(Integer, primary_key=True)
-    )
-    name: str = Field(
-        sa_column=Column(String, nullable=False)
-    )
-    university: str = Field(
-        sa_column=Column(String, nullable=False)
-    )
-    research_focus: str = Field(
-        sa_column=Column(String, nullable=False)
-    )
-    contact_email: str = Field(
-        sa_column=Column(String, nullable=False)
-    )
-    source_url: str = Field(
-        sa_column=Column(String, nullable=False)
+class Base(DeclarativeBase):
+    pass
+
+
+class User(Base):
+    __tablename__ = "user"
+    __table_args__ = (
+        UniqueConstraint("username", name="uq_user_username"),
     )
 
-    email_sent: bool = Field(
-        default=False,
-        sa_column=Column(Boolean, nullable=False, default=False)
-    )
-    email_sent_at: datetime | None = Field(
-        default=None,
-        sa_column=Column(DateTime(timezone=True), nullable=True)
-    )
-    reminder_sent: bool = Field(
-        default=False,
-        sa_column=Column(Boolean, nullable=False, default=False)
-    )
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    email: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-    owner_id: int | None = Field(
-        default=None,
-        sa_column=Column(Integer, ForeignKey("user.id"), nullable=True)
-    )
-    owner: Mapped["User" | None] = relationship(back_populates="contacts")
+    contacts: Mapped[list["Contact"]] = relationship(back_populates="owner", cascade="all, delete-orphan")
+
+
+class Contact(Base):
+    __tablename__ = "contact"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
+    university: Mapped[str] = mapped_column(String(200), nullable=False)
+    research_focus: Mapped[str] = mapped_column(String(500), nullable=False)
+    contact_email: Mapped[str] = mapped_column(String(320), nullable=False)
+    source_url: Mapped[str] = mapped_column(String(500), nullable=False, default="#")
+
+    email_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    email_sent_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    reminder_sent: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    owner_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
+    owner: Mapped[User] = relationship(back_populates="contacts")
