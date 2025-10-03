@@ -3,34 +3,36 @@
   {% set u = user if user is defined else request.state.user %}
 
   {% if not u %}
-    <div class="p-6 bg-white rounded-2xl shadow">Please <a class="text-sky-600 underline" href="/login">log in</a>.</div>
+    <div class="p-6 bg-white dark:bg-slate-900 rounded-2xl shadow border border-slate-200 dark:border-slate-800">
+      Please <a class="text-sky-600 dark:text-sky-400 underline" href="/login">log in</a>.
+    </div>
   {% else %}
   <div class="grid gap-8">
     <!-- Stats cards -->
     <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="gradient-card rounded-2xl bg-white shadow p-5">
-        <div class="text-slate-500 text-xs">Total</div>
+      <div class="gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-5 border border-slate-200 dark:border-slate-800">
+        <div class="text-slate-500 dark:text-slate-400 text-xs">Total</div>
         <div class="text-2xl font-semibold">{{ stats.total }}</div>
       </div>
-      <div class="gradient-card rounded-2xl bg-white shadow p-5">
-        <div class="text-slate-500 text-xs">Email sent</div>
+      <div class="gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-5 border border-slate-200 dark:border-slate-800">
+        <div class="text-slate-500 dark:text-slate-400 text-xs">Email sent</div>
         <div class="text-2xl font-semibold">{{ stats.sent }}</div>
       </div>
-      <div class="gradient-card rounded-2xl bg-white shadow p-5">
-        <div class="text-slate-500 text-xs">Reminders</div>
+      <div class="gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-5 border border-slate-200 dark:border-slate-800">
+        <div class="text-slate-500 dark:text-slate-400 text-xs">Reminders</div>
         <div class="text-2xl font-semibold">{{ stats.reminders }}</div>
       </div>
     </section>
 
     <!-- Add form -->
-    <section class="relative gradient-card rounded-2xl bg-white shadow p-5">
+    <section class="relative gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-5 border border-slate-200 dark:border-slate-800">
       <h2 class="text-lg font-semibold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600">Add a contact</h2>
       <form action="/add" method="post" class="grid md:grid-cols-5 gap-3">
-        <input name="name" required placeholder="Name" class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-sky-400" />
-        <input name="university" required placeholder="University" class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
-        <input name="research_focus" required placeholder="Research Focus" class="px-3 py-2 rounded-lg border md:col-span-2 focus:outline-none focus:ring-2 focus:ring-emerald-400" />
-        <input name="contact_email" required type="email" placeholder="Contact Email" class="px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-sky-400" />
-        <input name="source_url" placeholder="Source URL" class="px-3 py-2 rounded-lg border md:col-span-4 focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
+        <input name="name" required placeholder="Name" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400" />
+        <input name="university" required placeholder="University" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
+        <input name="research_focus" required placeholder="Research Focus" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 md:col-span-2 focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        <input name="contact_email" required type="email" placeholder="Contact Email" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400" />
+        <input name="source_url" placeholder="Source URL" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 md:col-span-4 focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
         <div class="md:col-span-5">
           <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600 text-white shadow hover:opacity-95 active:opacity-90">Save</button>
         </div>
@@ -38,16 +40,16 @@
     </section>
 
     <!-- List -->
-    <section class="relative gradient-card rounded-2xl bg-white shadow overflow-hidden">
-      <div class="px-5 py-4 border-b flex items-center justify-between">
+    <section class="relative gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow overflow-hidden border border-slate-200 dark:border-slate-800">
+      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <h2 class="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-sky-600 to-fuchsia-600">My Contacts</h2>
-        <p class="text-xs text-slate-500">Toggle statuses, edit or delete entries.</p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Toggle statuses, edit or delete entries.</p>
       </div>
 
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm">
           <thead>
-            <tr class="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 text-slate-700 text-left">
+            <tr class="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 dark:from-slate-800 dark:via-slate-800 dark:to-slate-800 text-slate-700 dark:text-slate-200 text-left">
               <th class="px-4 py-3">Name</th>
               <th class="px-4 py-3">University</th>
               <th class="px-4 py-3">Research Focus</th>
@@ -59,33 +61,33 @@
               <th class="px-4 py-3">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y">
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
             {% for c in contacts %}
-            <tr class="hover:bg-slate-50/70">
+            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/70">
               <td class="px-4 py-3 font-medium flex items-center gap-2">
                 <span class="inline-block h-2.5 w-2.5 rounded-full bg-gradient-to-r from-sky-500 via-fuchsia-500 to-emerald-500"></span>
                 {{ c.name }}
               </td>
               <td class="px-4 py-3">{{ c.university }}</td>
-              <td class="px-4 py-3 text-slate-700">{{ c.research_focus }}</td>
+              <td class="px-4 py-3 text-slate-700 dark:text-slate-300">{{ c.research_focus }}</td>
               <td class="px-4 py-3">
-                <a class="text-sky-700 hover:underline" href="mailto:{{ c.contact_email }}">{{ c.contact_email }}</a>
+                <a class="text-sky-700 dark:text-sky-400 hover:underline" href="mailto:{{ c.contact_email }}">{{ c.contact_email }}</a>
               </td>
               <td class="px-4 py-3">
                 {% if c.source_url and c.source_url != '#' %}
-                <a class="text-fuchsia-700 hover:underline" href="{{ c.source_url }}" target="_blank" rel="noopener">Source</a>
+                <a class="text-fuchsia-700 dark:text-fuchsia-400 hover:underline" href="{{ c.source_url }}" target="_blank" rel="noopener">Source</a>
                 {% else %}
                 <span class="text-slate-400">—</span>
                 {% endif %}
               </td>
               <td class="px-4 py-3">
                 <form action="/toggle-email/{{ c.id }}" method="post">
-                  <button type="submit" class="px-3 py-1 rounded-full text-xs font-semibold shadow {{ 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white' if c.email_sent else 'bg-gradient-to-r from-slate-200 to-slate-300 text-slate-700' }}">
+                  <button type="submit" class="px-3 py-1 rounded-full text-xs font-semibold shadow {{ 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white' if c.email_sent else 'bg-gradient-to-r from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-700 text-slate-700 dark:text-slate-200' }}">
                     {{ 'Sent' if c.email_sent else 'Not sent' }}
                   </button>
                 </form>
               </td>
-              <td class="px-4 py-3 text-slate-600">
+              <td class="px-4 py-3 text-slate-600 dark:text-slate-300">
                 {% if c.email_sent_at %}
                   {{ c.email_sent_at.astimezone().strftime('%Y-%m-%d %H:%M') }}
                 {% else %}
@@ -94,7 +96,7 @@
               </td>
               <td class="px-4 py-3">
                 <form action="/toggle-reminder/{{ c.id }}" method="post">
-                  <button type="submit" class="px-3 py-1 rounded-full text-xs font-semibold shadow {{ 'bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white' if c.reminder_sent else 'bg-gradient-to-r from-slate-200 to-slate-300 text-slate-700' }}">
+                  <button type="submit" class="px-3 py-1 rounded-full text-xs font-semibold shadow {{ 'bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white' if c.reminder_sent else 'bg-gradient-to-r from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-700 text-slate-700 dark:text-slate-200' }}">
                     {{ 'Sent' if c.reminder_sent else 'Not sent' }}
                   </button>
                 </form>
