@@ -41,9 +41,30 @@
 
     <!-- List -->
     <section class="relative gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow overflow-hidden border border-slate-200 dark:border-slate-800">
-      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <h2 class="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-sky-600 to-fuchsia-600">My Contacts</h2>
-        <p class="text-xs text-slate-500 dark:text-slate-400">Toggle statuses, edit or delete entries.</p>
+      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+        <h2 class="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-sky-600 to-fuchsia-600">
+          My Contacts
+        </h2>
+
+        <div class="flex items-center gap-2">
+          <!-- Export -->
+          <a
+            href="/export.csv"
+            class="px-3 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow hover:opacity-95"
+            download
+            title="Download a CSV of your contacts"
+          >
+            ⬇️ Export CSV
+          </a>
+
+          <!-- Import -->
+          <form action="/import.csv" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
+            <label class="px-3 py-1 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+              📤 Import CSV
+              <input type="file" name="file" accept=".csv,text/csv" class="hidden" onchange="this.form.submit()" />
+            </label>
+          </form>
+        </div>
       </div>
 
       <div class="overflow-x-auto">
@@ -117,4 +138,49 @@
     </section>
   </div>
   {% endif %}
+
+  <!-- tiny toast for import results -->
+  <div id="toast" class="fixed bottom-4 right-4 hidden px-4 py-3 rounded-xl text-sm bg-slate-900 text-white/90 shadow-lg dark:bg-slate-800"></div>
+
+  <script>
+    // ---- Ensure theme works even if base.html missed it ----
+    (function initTheme() {
+      const root = document.documentElement;
+      try {
+        const ls = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (ls === 'dark' || (!ls && prefersDark)) root.classList.add('dark');
+      } catch (_) {}
+    })();
+
+    (function wireThemeToggle() {
+      const btn = document.getElementById('themeToggle');
+      if (!btn) return; // button lives in base.html; if it's not there, nothing to do
+      btn.addEventListener('click', () => {
+        const root = document.documentElement;
+        const isDark = root.classList.toggle('dark');
+        try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (_) {}
+        // swap icons if present
+        const sun = document.getElementById('iconSun');
+        const moon = document.getElementById('iconMoon');
+        if (sun && moon) {
+          if (isDark) { sun.classList.remove('hidden'); moon.classList.add('hidden'); }
+          else { sun.classList.add('hidden'); moon.classList.remove('hidden'); }
+        }
+      });
+    })();
+
+    // ---- Import results toast (?imported&updated&skipped) ----
+    (function showImportToast() {
+      const sp = new URLSearchParams(window.location.search);
+      const a = sp.get('imported'), b = sp.get('updated'), c = sp.get('skipped');
+      if (!a && !b && !c) return;
+      const t = document.getElementById('toast');
+      t.textContent = `Import complete — created: ${a||0}, updated: ${b||0}, skipped: ${c||0}`;
+      t.classList.remove('hidden');
+      setTimeout(() => t.classList.add('hidden'), 5000);
+      // Clean the URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    })();
+  </script>
 {% endblock %}

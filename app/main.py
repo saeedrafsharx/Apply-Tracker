@@ -7,6 +7,8 @@ from fastapi import FastAPI, Request, Form
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import StreamingResponse
+from fastapi import UploadFile, File
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -236,3 +238,208 @@ def toggle_reminder(request: Request, contact_id: int):
         if c and c.owner_id == user.id:
             c.reminder_sent = not c.reminder_sent
     return RedirectResponse("/dashboard", status_code=303)
+
+@app.get("/export.csv")
+def export_csv(request: Request):
+    # Auth
+    with session_scope() as db:
+        user = current_user(request, db)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+
+        contacts = (
+            db.execute(
+                select(Contact)
+                .where(Contact.owner_id == user.id)
+                .order_by(Contact.university, Contact.name)
+            )
+            .scalars()
+            .all()
+        )
+
+    # Build CSV (add BOM so Excel opens it cleanly)
+    import csv, io
+    output = io.StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow([
+        "Name",
+        "University",
+        "Research Focus",
+        "Contact Email",
+        "Source URL",
+        "Email Sent",
+        "Email Sent At (UTC)",
+        "Reminder Sent",
+    ])
+    for c in contacts:
+        writer.writerow([
+            c.name,
+            c.university,
+            c.research_focus,
+            c.contact_email,
+            c.source_url or "",
+            "Yes" if c.email_sent else "No",
+            (c.email_sent_at.isoformat() if c.email_sent_at else ""),
+            "Yes" if c.reminder_sent else "No",
+        ])
+    data = output.getvalue().encode("utf-8-sig")
+    output.close()
+
+    filename = f"applylist-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}.csv"
+    headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+    return StreamingResponse(iter([data]), media_type="text/csv; charset=utf-8", headers=headers)
+
+@app.post("/import.csv")
+async def import_csv(request: Request, file: UploadFile = File(...)):
+    # Auth
+    with session_scope() as db:
+        user = current_user(request, db)
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+
+    # Read the uploaded file
+    raw = await file.read()
+
+    # Decode with fallbacks
+    for enc in ("utf-8-sig", "utf-8", "iso-8859-1"):
+        try:
+            text = raw.decode(enc)
+            break
+        except UnicodeDecodeError:
+            text = None
+    if text is None:
+        text = raw.decode("utf-8", "ignore")
+
+    import csv, io
+    from datetime import datetime
+
+    # Normalize header: lowercase + remove non-alphanum
+    def norm(s: str) -> str:
+        return "".join(ch.lower() for ch in (s or "") if ch.isalnum())
+
+    # Accept common synonyms
+    aliases = {
+        "name": ["name", "fullname", "contactname"],
+        "university": ["university", "uni", "institution", "school"],
+        "research_focus": ["researchfocus", "researcharea", "area", "topic", "field"],
+        "contact_email": ["contactemail", "email", "emailaddress", "e-mail", "mail"],
+        "source_url": ["sourceurl", "source", "link", "url", "website", "page"],
+        "email_sent": ["emailsent", "sent", "emailsentflag"],
+        "email_sent_at": ["emailsentat", "emailsentdate", "sentat", "emailsenton"],
+        "reminder_sent": ["remindersent", "reminder", "followup", "followupsent"],
+    }
+
+    # Try common delimiters until header has enough known fields
+    candidates = [",", ";", "\t", "|"]
+    picked = None
+    header = []
+    for delim in candidates:
+        test = csv.reader(io.StringIO(text), delimiter=delim)
+        header = next(test, [])
+        normed = [norm(h) for h in header]
+        known = sum(
+            1 for h in normed
+            if any(h in [*vals] for vals in aliases.values())
+        )
+        if known >= 2:
+            picked = delim
+            break
+    if not picked:
+        picked = ","  # default
+
+    dict_reader = csv.DictReader(io.StringIO(text), delimiter=picked)
+    header_row = dict_reader.fieldnames or []
+
+    # Build a map: target_field -> actual header name in file
+    # (choose the first alias that exists in the file)
+    norm_headers = {norm(h): h for h in header_row}
+    wanted = {}
+    for target, syns in aliases.items():
+        for s in syns:
+            if s in norm_headers:
+                wanted[target] = norm_headers[s]
+                break
+
+    def val(row, target_name, default=""):
+        h = wanted.get(target_name)
+        return (row.get(h, default) if h else default)
+
+    def to_bool(v) -> bool:
+        s = str(v or "").strip().lower()
+        return s in {"1", "true", "yes", "y", "on"}
+
+    def parse_dt(v):
+        s = (v or "").strip()
+        if not s:
+            return None
+        # Accept ISO & common simple formats
+        for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+            try:
+                if s.endswith("Z"):
+                    s = s[:-1] + "+00:00"
+                return datetime.strptime(s, fmt)
+            except Exception:
+                continue
+        try:
+            return datetime.fromisoformat(s)
+        except Exception:
+            return None
+
+    created, updated, skipped = 0, 0, 0
+
+    with session_scope() as db:
+        user = current_user(request, db)  # re-check inside session
+        if not user:
+            return RedirectResponse("/login", status_code=303)
+
+        for row in dict_reader:
+            name = (val(row, "name").strip())
+            contact_email = (val(row, "contact_email").strip())
+            if not (name and contact_email):
+                skipped += 1
+                continue
+
+            university = val(row, "university").strip()
+            research_focus = val(row, "research_focus").strip()
+            source_url = (val(row, "source_url").strip() or "#")
+
+            email_sent = to_bool(val(row, "email_sent"))
+            email_sent_at = parse_dt(val(row, "email_sent_at"))
+            reminder_sent = to_bool(val(row, "reminder_sent"))
+
+            # Upsert by (name + contact_email) per user
+            existing = (
+                db.execute(
+                    select(Contact).where(
+                        Contact.owner_id == user.id,
+                        Contact.name == name,
+                        Contact.contact_email == contact_email,
+                    )
+                )
+                .scalars()
+                .first()
+            )
+
+            if existing:
+                if university:      existing.university = university
+                if research_focus:  existing.research_focus = research_focus
+                if source_url:      existing.source_url = source_url
+                existing.email_sent = email_sent
+                existing.email_sent_at = (email_sent_at if email_sent else None)
+                existing.reminder_sent = reminder_sent
+                updated += 1
+            else:
+                db.add(Contact(
+                    owner_id=user.id,
+                    name=name,
+                    university=university or "",
+                    research_focus=research_focus or "",
+                    contact_email=contact_email,
+                    source_url=source_url,
+                    email_sent=email_sent,
+                    email_sent_at=(email_sent_at if email_sent else None),
+                    reminder_sent=reminder_sent,
+                ))
+                created += 1
+
+    return RedirectResponse(f"/dashboard?imported={created}&updated={updated}&skipped={skipped}", status_code=303)
