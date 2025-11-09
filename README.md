@@ -1,4 +1,4 @@
-# ApplyList · Contact Tracker for Grad/Research Applications 🇮🇷✨
+# ApplyList · Contact Tracker for Grad/Research Applications
 
 > A friendly, colorful web app to **track professors, labs, and outreach** while applying for **Master’s/PhD** — especially popular with students applying from **Iran to Canada/US/Europe** in **Neuroscience, ML, and CS**.
 
