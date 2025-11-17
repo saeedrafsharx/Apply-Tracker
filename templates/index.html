@@ -7,63 +7,144 @@
       Please <a class="text-sky-600 dark:text-sky-400 underline" href="/login">log in</a>.
     </div>
   {% else %}
-  <div class="grid gap-8">
-    <!-- Stats cards -->
-    <section class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-5 border border-slate-200 dark:border-slate-800">
-        <div class="text-slate-500 dark:text-slate-400 text-xs">Total</div>
-        <div class="text-2xl font-semibold">{{ stats.total }}</div>
-      </div>
-      <div class="gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-5 border border-slate-200 dark:border-slate-800">
-        <div class="text-slate-500 dark:text-slate-400 text-xs">Email sent</div>
-        <div class="text-2xl font-semibold">{{ stats.sent }}</div>
-      </div>
-      <div class="gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-5 border border-slate-200 dark:border-slate-800">
-        <div class="text-slate-500 dark:text-slate-400 text-xs">Reminders</div>
-        <div class="text-2xl font-semibold">{{ stats.reminders }}</div>
-      </div>
-    </section>
-
-    <!-- Add form -->
-    <section class="relative gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-5 border border-slate-200 dark:border-slate-800">
-      <h2 class="text-lg font-semibold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600">Add a contact</h2>
-      <form action="/add" method="post" class="grid md:grid-cols-5 gap-3">
-        <input name="name" required placeholder="Name" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400" />
-        <input name="university" required placeholder="University" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
-        <input name="research_focus" required placeholder="Research Focus" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 md:col-span-2 focus:outline-none focus:ring-2 focus:ring-emerald-400" />
-        <input name="contact_email" required type="email" placeholder="Contact Email" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400" />
-        <input name="source_url" placeholder="Source URL" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 md:col-span-4 focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
-        <div class="md:col-span-5">
-          <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600 text-white shadow hover:opacity-95 active:opacity-90">Save</button>
+  <div class="grid gap-4">
+    <!-- TOP: stats + add form side by side on large screens -->
+    <section class="grid gap-4 lg:grid-cols-3">
+      <!-- Stats cards (1 column on mobile, 1/3 on large) -->
+      <div class="grid grid-cols-3 gap-3 lg:col-span-1">
+        <div class="gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-4 border border-slate-200 dark:border-slate-800">
+          <div class="text-slate-500 dark:text-slate-400 text-xs">Total</div>
+          <div class="text-xl font-semibold">{{ stats.total }}</div>
         </div>
-      </form>
+        <div class="gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-4 border border-slate-200 dark:border-slate-800">
+          <div class="text-slate-500 dark:text-slate-400 text-xs">Email sent</div>
+          <div class="text-xl font-semibold">{{ stats.sent }}</div>
+        </div>
+        <div class="gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-4 border border-slate-200 dark:border-slate-800">
+          <div class="text-slate-500 dark:text-slate-400 text-xs">Reminders</div>
+          <div class="text-xl font-semibold">{{ stats.reminders }}</div>
+        </div>
+      </div>
+
+      <!-- Add form (2/3 width on large screens) -->
+      <div class="gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow p-4 border border-slate-200 dark:border-slate-800 lg:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600">
+            Add a professor
+          </h2>
+          <p class="hidden md:inline text-xs text-slate-500 dark:text-slate-400">
+            Quick add: just fill the key fields and hit Save.
+          </p>
+        </div>
+
+        <!-- More structured, label + input layout -->
+        <form action="/add" method="post" class="grid gap-3 md:grid-cols-2">
+          <div class="space-y-1">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400">Name</label>
+            <input name="name" required placeholder="Prof. Name"
+                   class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400">University</label>
+            <input name="university" required placeholder="McGill University (IPN)"
+                   class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
+          </div>
+
+          <div class="space-y-1 md:col-span-2">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400">Research focus</label>
+            <input name="research_focus" required placeholder="e.g. computational neuroimaging, ML, brain networks"
+                   class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400">Contact email</label>
+            <input name="contact_email" required type="email" placeholder="name@university.edu"
+                   class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400">Source URL</label>
+            <input name="source_url" placeholder="Where you found them (page/link)"
+                   class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-fuchsia-400" />
+          </div>
+
+          <div class="space-y-1">
+            <label class="block text-xs font-medium text-slate-500 dark:text-slate-400">Category</label>
+            <input name="category" placeholder="e.g. Canada, Top list, 2025"
+                   class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+          </div>
+
+          <div class="md:col-span-2 flex justify-end pt-1">
+            <button type="submit"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600 text-white text-sm font-semibold shadow hover:opacity-95 active:opacity-90">
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
     </section>
 
-    <!-- List -->
+    <!-- TABLE: professors list -->
     <section class="relative gradient-card rounded-2xl bg-white dark:bg-slate-900 shadow overflow-hidden border border-slate-200 dark:border-slate-800">
-      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+      <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <h2 class="text-lg font-semibold bg-clip-text text-transparent bg-gradient-to-r from-emerald-600 via-sky-600 to-fuchsia-600">
-          My Contacts
+          Professors
         </h2>
 
-        <div class="flex items-center gap-2">
-          <!-- Export -->
-          <a
-            href="/export.csv"
-            class="px-3 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow hover:opacity-95"
-            download
-            title="Download a CSV of your contacts"
-          >
-            ⬇️ Export CSV
-          </a>
-
-          <!-- Import -->
-          <form action="/import.csv" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
-            <label class="px-3 py-1 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
-              📤 Import CSV
-              <input type="file" name="file" accept=".csv,text/csv" class="hidden" onchange="this.form.submit()" />
-            </label>
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Search -->
+          <form method="get" action="/professors" class="flex items-center gap-2">
+            <input type="hidden" name="sort" value="{{ sort }}">
+            {% if category %}
+              <input type="hidden" name="category" value="{{ category }}">
+            {% endif %}
+            <input
+              type="text"
+              name="q"
+              placeholder="Search name, university, focus, email"
+              value="{{ q or '' }}"
+              class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+            />
+            <button class="px-3 py-1.5 rounded-lg bg-sky-600 text-white text-sm">
+              Search
+            </button>
           </form>
+
+          <!-- Category filter -->
+          <form method="get" action="/professors" class="flex items-center gap-2">
+            <input type="hidden" name="sort" value="{{ sort }}">
+            {% if q %}
+              <input type="hidden" name="q" value="{{ q }}">
+            {% endif %}
+            <select name="category"
+                    class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                    onchange="this.form.submit()">
+              <option value="">All categories</option>
+              {% for cat in categories %}
+                <option value="{{ cat }}" {% if cat == category %}selected{% endif %}>{{ cat }}</option>
+              {% endfor %}
+            </select>
+          </form>
+
+          <!-- Export/Import -->
+          <div class="flex items-center gap-2">
+            <a
+              href="/export.csv"
+              class="px-3 py-1 rounded-lg text-xs font-semibold bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow hover:opacity-95"
+              download
+              title="Download a CSV of your contacts"
+            >
+              ⬇️ Export CSV
+            </a>
+
+            <form action="/import.csv" method="post" enctype="multipart/form-data" class="flex items-center gap-2">
+              <label class="px-3 py-1 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+                📤 Import CSV
+                <input type="file" name="file" accept=".csv,text/csv" class="hidden" onchange="this.form.submit()" />
+              </label>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -71,13 +152,30 @@
         <table class="min-w-full text-sm">
           <thead>
             <tr class="bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 dark:from-slate-800 dark:via-slate-800 dark:to-slate-800 text-slate-700 dark:text-slate-200 text-left">
-              <th class="px-4 py-3">Name</th>
-              <th class="px-4 py-3">University</th>
-              <th class="px-4 py-3">Research Focus</th>
-              <th class="px-4 py-3">Email</th>
+              <th class="px-4 py-3">
+                <a href="?sort=name{% if q %}&q={{ q }}{% endif %}{% if category %}&category={{ category }}{% endif %}" class="hover:underline">
+                  Name
+                </a>
+              </th>
+              <th class="px-4 py-3">
+                <a href="?sort=university{% if q %}&q={{ q }}{% endif %}{% if category %}&category={{ category }}{% endif %}" class="hover:underline">
+                  University
+                </a>
+              </th>
+              <th class="px-4 py-3">Research focus</th>
+              <th class="px-4 py-3">
+                <a href="?sort=email{% if q %}&q={{ q }}{% endif %}{% if category %}&category={{ category }}{% endif %}" class="hover:underline">
+                  Email
+                </a>
+              </th>
               <th class="px-4 py-3">Source</th>
-              <th class="px-4 py-3">Email Sent</th>
-              <th class="px-4 py-3">Sent At</th>
+              <th class="px-4 py-3">
+                <a href="?sort=category{% if q %}&q={{ q }}{% endif %}{% if category %}&category={{ category }}{% endif %}" class="hover:underline">
+                  Category
+                </a>
+              </th>
+              <th class="px-4 py-3">Email sent</th>
+              <th class="px-4 py-3">Sent at</th>
               <th class="px-4 py-3">Reminder</th>
               <th class="px-4 py-3">Actions</th>
             </tr>
@@ -100,6 +198,9 @@
                 {% else %}
                 <span class="text-slate-400">—</span>
                 {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                {{ c.category or 'General' }}
               </td>
               <td class="px-4 py-3">
                 <form action="/toggle-email/{{ c.id }}" method="post">
@@ -139,38 +240,10 @@
   </div>
   {% endif %}
 
-  <!-- tiny toast for import results -->
+  <!-- Import results toast -->
   <div id="toast" class="fixed bottom-4 right-4 hidden px-4 py-3 rounded-xl text-sm bg-slate-900 text-white/90 shadow-lg dark:bg-slate-800"></div>
 
   <script>
-    // ---- Ensure theme works even if base.html missed it ----
-    (function initTheme() {
-      const root = document.documentElement;
-      try {
-        const ls = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        if (ls === 'dark' || (!ls && prefersDark)) root.classList.add('dark');
-      } catch (_) {}
-    })();
-
-    (function wireThemeToggle() {
-      const btn = document.getElementById('themeToggle');
-      if (!btn) return; // button lives in base.html; if it's not there, nothing to do
-      btn.addEventListener('click', () => {
-        const root = document.documentElement;
-        const isDark = root.classList.toggle('dark');
-        try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (_) {}
-        // swap icons if present
-        const sun = document.getElementById('iconSun');
-        const moon = document.getElementById('iconMoon');
-        if (sun && moon) {
-          if (isDark) { sun.classList.remove('hidden'); moon.classList.add('hidden'); }
-          else { sun.classList.add('hidden'); moon.classList.remove('hidden'); }
-        }
-      });
-    })();
-
-    // ---- Import results toast (?imported&updated&skipped) ----
     (function showImportToast() {
       const sp = new URLSearchParams(window.location.search);
       const a = sp.get('imported'), b = sp.get('updated'), c = sp.get('skipped');
@@ -179,7 +252,6 @@
       t.textContent = `Import complete — created: ${a||0}, updated: ${b||0}, skipped: ${c||0}`;
       t.classList.remove('hidden');
       setTimeout(() => t.classList.add('hidden'), 5000);
-      // Clean the URL
       window.history.replaceState({}, document.title, window.location.pathname);
     })();
   </script>

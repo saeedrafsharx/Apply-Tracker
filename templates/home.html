@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-2xl mx-auto mt-12">
+  <h1 class="text-3xl font-semibold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-sky-600 via-fuchsia-600 to-emerald-600">
+    What do you want to track?
+  </h1>
+
+  <div class="grid gap-6">
+    <a href="/professors"
+       class="p-8 text-center rounded-2xl bg-gradient-to-r from-sky-600 to-indigo-600 text-white text-2xl font-semibold shadow hover:opacity-90">
+      Professors
+      <div class="mt-2 text-sm font-normal text-sky-100/90">Your current dashboard</div>
+    </a>
+
+    <a href="/positions"
+       class="p-8 text-center rounded-2xl bg-gradient-to-r from-fuchsia-600 to-rose-600 text-white text-2xl font-semibold shadow hover:opacity-90">
+      Positions
+      <div class="mt-2 text-sm font-normal text-rose-100/90">Fellowships, PhD calls, RA posts</div>
+    </a>
+
+    <a href="#"
+       class="p-8 text-center rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white text-2xl font-semibold shadow opacity-70 cursor-not-allowed">
+      Coming Soon
+      <div class="mt-2 text-sm font-normal text-emerald-100/90">Database</div>
+    </a>
+  </div>
+</div>
+{% endblock %}
