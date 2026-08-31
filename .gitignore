@@ -1,1 +1,16 @@
-venv
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.env
+.env.*
+
+*.sqlite3
+*.db
+
+.idea/
+.vscode/
