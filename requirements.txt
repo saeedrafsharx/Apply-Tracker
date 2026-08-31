@@ -7,3 +7,4 @@ pydantic>=2.5
 python-multipart>=0.0.9
 itsdangerous
 pydantic[email]
+passlib
