@@ -6,3 +6,4 @@ sqlmodel>=0.0.21
 pydantic>=2.5
 python-multipart>=0.0.9
 itsdangerous
+pydantic[email]
